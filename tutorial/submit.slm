@@ -1,0 +1,9 @@
+#!/bin/bash --login
+#SBATCH -p multicore
+#SBATCH -n 40
+#SBATCH --time=168:00:00
+
+
+
+# Run the procedure
+python equilibrate.py --deltardf 0.02 --maxcycles 6

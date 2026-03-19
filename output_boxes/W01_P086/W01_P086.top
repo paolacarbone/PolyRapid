@@ -1,0 +1,27 @@
+;
+; Gromacs system topology (top) file.
+; Produced from DL_FIELD v4.11
+;
+
+[ defaults ]
+; nbfunc   comb-rule   gen-pairs   fudgeLJ fudgeQQ
+1       1           no          0.500000      0.500000
+
+[ atomtypes ]
+; atom_type  at.num   mass   charge   ptype   c6   c12
+CT           6  12.01150     0.000   A  2.030504e-03  3.732606e-06
+CO4          6  12.01150     0.000   A  4.886845e-03  1.358990e-05
+O            8  15.99940     0.000   A  2.363857e-03  1.589906e-06
+HC           1   1.00797     0.000   A  1.225781e-04  2.992630e-08
+HAE          1   1.00797     0.000   A  5.042375e-05  1.012808e-08
+
+#include "gromacs1.itp"
+
+[ system ]
+; Title
+Control file title. For DL_FIELD 4.10 
+
+; System composition
+[ molecules ]
+; Molecular_group   species #
+XYZ	308
