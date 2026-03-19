@@ -40,7 +40,7 @@ In the following sections we provide a tutorial to equilibrate a box of polyethy
 Install the required prerequisites and clone this repository via 
 
 ```
-git clone https://github.com/lois181/AutoPol.git
+git clone https://github.com/paolacarbone/PolyRapid.git
 ```
 
 move into the `tutorial` directory
