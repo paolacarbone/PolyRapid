@@ -1,5 +1,5 @@
 # PolyRapid
-AutoPol is an automated procedure for MD homopolymer equilibration from monomer SMILES. It proceeds in the following steps:
+PolyRapid is an automated procedure for MD homopolymer equilibration from monomer SMILES. It proceeds in the following steps:
 
 1. Create a single polymer chain XYZ from monomer SMILES using `create_chain.py` (default is 20mer). This includes a short geometry optimisation using Open Babel. 
 2. Assign OPLS/AA forcefield parameters using DL_FIELD (`assign_forcefield.py`).
@@ -11,7 +11,7 @@ AutoPol is an automated procedure for MD homopolymer equilibration from monomer 
 
 ## Python
 
-AutoPol requires Python version 3.12 or higher and depends on the following libraries 
+PolyRapid requires Python version 3.12 or higher and depends on the following libraries 
 
 | Library | Version |
 |----------|----------|
