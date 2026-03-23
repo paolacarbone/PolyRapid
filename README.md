@@ -129,5 +129,5 @@ We offer an automated method for calculating the polymer glass transition temper
 
 ## Polymer database
 
-Data collected on 103 homopolymers using PolyRapid can be found in `results.csv`. Where available, experimental results for the polymer density and glass transition temperatures have also been provided.
+Data collected on 103 homopolymers using PolyRapid can be found in `results.csv`. Where available, experimental results for the polymer density and glass transition temperatures have also been provided. Output configuration files for all equilibrated polymers, along with their topology files, can be found in `output_boxes/`.
 
