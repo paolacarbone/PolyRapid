@@ -127,4 +127,7 @@ Module loads and header lines should be changed to reflect your own HPC architec
 
 We offer an automated method for calculating the polymer glass transition temperature with `glass_transition.py`, which automatically begins the simulation from the trajectory of the final annealing cycle from `equilibrate.py`. It can be run using a similar submission script to `submit.slm`. Full details on the glass transition calculation can be found in the preprint link: https://arxiv.org/abs/2603.05362.
 
+## Polymer database
+
+Data collected on 103 homopolymers using PolyRapid can be found in `results.csv`. Where available, experimental results for the polymer density and glass transition temperatures have also been provided.
 
