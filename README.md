@@ -1,4 +1,4 @@
-# AutoPol
+# PolyRapid
 AutoPol is an automated procedure for MD homopolymer equilibration from monomer SMILES. It proceeds in the following steps:
 
 1. Create a single polymer chain XYZ from monomer SMILES using `create_chain.py` (default is 20mer). This includes a short geometry optimisation using Open Babel. 
