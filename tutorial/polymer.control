@@ -26,9 +26,9 @@ default   * Sigma mixing rule (organic FF only) : default, or 1 = geometric, 2 =
 0         * Constrain bonds? 1 = Yes (see below) 0 = No
 0         * Apply rigid body? 1 = Yes (see below) 0 = No
 0        * Periodic condition ? 0=no, other number = type of box (see below)
-10000.0 0.0   0.0 * Cell vector a (x, y, z)
-0.0  10000.0   0.0  * Cell vector b (x, y, z)
-0.0   0.0  10000.0 * Cell vector c (x, y, z)
+1000.0 0.0   0.0 * Cell vector a (x, y, z)
+0.0  1000.0   0.0  * Cell vector b (x, y, z)
+0.0   0.0  1000.0 * Cell vector c (x, y, z)
 default   * 1-4 scaling for coulombic (put default or x for scaling=x)
 default   * 1-4 scaling for vdw (put default or x for scaling=x)
 0  300.0  * Include velocity? 1=yes, 0=no and scaling temperature.
