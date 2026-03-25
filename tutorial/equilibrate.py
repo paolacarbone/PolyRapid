@@ -325,7 +325,7 @@ def main():
         run([grompp_kw, "polystat", "-f", str(step_anneal / f"step{step}_anneal.xtc"),
              "-s", str(step_anneal / f"step{step}_anneal.tpr"),
              "-n", str(index_file),
-             "-o", str(step_anneal / f"polystat_step{step}_anneal.xvg"), 
+             "-o", str(step_anneal / f"polystat_step{step}_anneal.xvg")], 
             input=b"2\n")
 
         # Step 2 check
