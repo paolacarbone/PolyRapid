@@ -90,7 +90,7 @@ If successful, each folder in the `Output/` directory should now contain the GRO
 
 ## Create box 
 
-We now use the PE *.gro file to create a PE box with ~50,000 atoms. Ensure your version of GROMACS has MPI support and run the following from the current working directory
+We now use the PE *.gro file to create a PE box with ~50,000 atoms. Ensure your version of GROMACS has MPI support and run the following from the `Output/` directory
 
 ```
 python create_box.py
