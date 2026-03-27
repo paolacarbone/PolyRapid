@@ -64,115 +64,32 @@ def linear_fit(x, y, GuessTg):
     x0, y0, m1, m2 = popt
     return x0, y0, m1, m2
 
-def hyperbola(t, t_g, rho_0, a, b, c):
-    piece = 0.5*(t-t_g) + np.sqrt(0.25*(t-t_g)**2 + np.exp(c))
-    return rho_0 - a*(t-t_g) - b*piece
-
-def hyperbolic_fit(x, y, GuessTg):
-    x0, y0, a, b = linear_fit(x, y, GuessTg)
-    initial_values = (x0, y0, -a, -(a+b), 1)
-
-    # Contrain the Tg to be within the domain of the data
-    t_min = np.min(x)
-    t_max = np.max(x)
-    bounds = ( 
-        [t_min, -np.inf, -np.inf, -np.inf, -np.inf],  # Lower bounds
-        [t_max, np.inf, np.inf, np.inf, np.inf]       # Upper bounds
-    )
-
-    popt, pcov = curve_fit(hyperbola,
-        x,
-        y,
-        p0=initial_values,
-        bounds=bounds,
-        maxfev=10000000)
-    
-    fit_param_dict = {
-        "t_g": popt[0],
-        "rho_0": popt[1],
-        "a": popt[2],
-        "b": popt[3],
-        "c": popt[4],
-    }
-    return fit_param_dict, popt
-
-def glass_transition_analysis(voltemp_path, GuessTg=200, RangeLim=400):
-    Temperature, Volume = np.loadtxt(voltemp_path, skiprows=0, comments=['#','@'], unpack=True, usecols=(1,2))
+def glass_transition_analysis(denstemp_path, GuessTg=200, RangeLim=400):
+    Temperature, Density = np.loadtxt(denstemp_path, skiprows=0, comments=['#','@'], unpack=True, usecols=(1,2))
 
     # Apply temperature domain limit
     mask = Temperature <= RangeLim
     Temperature_fit = Temperature[mask]
-    Volume_fit = Volume[mask]
-
-    # --- Hyperbolic fit ---
-    fit_param_dict, popt = hyperbolic_fit(Temperature_fit, Volume_fit, GuessTg)
-    t_g = fit_param_dict["t_g"]
-    rho_0 = fit_param_dict["rho_0"]
-    a = fit_param_dict["a"]
-    b = fit_param_dict["b"]
-    c = fit_param_dict["c"]
-    
-    # Estimate expansion coefficients as slopes far from Tg
-    T_low = Temperature_fit[Temperature_fit < t_g]
-    T_high = Temperature_fit[Temperature_fit > t_g]
-    if len(T_low) > 1:
-        slope_below = (hyperbola(T_low[-1], t_g, rho_0, a, b, c) - hyperbola(T_low[0], t_g, rho_0, a, b, c)) / (T_low[-1] - T_low[0])
-    else:
-        slope_below = a
-    if len(T_high) > 1:
-        slope_above = (hyperbola(T_high[-1], t_g, rho_0, a, b, c) - hyperbola(T_high[0], t_g, rho_0, a, b, c)) / (T_high[-1] - T_high[0])
-    else:
-        slope_above = a + b
-
-    Vol_Below_Tg = np.mean(Volume_fit[Temperature_fit < t_g]) * 1e-27 if len(Volume_fit[Temperature_fit < t_g]) > 0 else 1
-    Vol_Above_Tg = np.mean(Volume_fit[Temperature_fit > t_g]) * 1e-27 if len(Volume_fit[Temperature_fit > t_g]) > 0 else 1
-
-    beta_below = slope_below * 1e-27 / Vol_Below_Tg
-    beta_above = slope_above * 1e-27 / Vol_Above_Tg
-
-    # Plot hyperbolic fit with dropline from the hyperbolic curve
-    plt.figure(figsize=(5,5))
-    plt.scatter(Temperature_fit, Volume_fit, label="Data")
-    T_fit = np.linspace(min(Temperature_fit), max(Temperature_fit), 500)
-    plt.plot(T_fit, hyperbola(T_fit, *popt), 'r-', label="Hyperbolic fit")
-    vol_at_tg = hyperbola(t_g, *popt)
-    plt.plot([t_g, t_g], [min(Volume_fit), vol_at_tg], 'k:', label=f"Tg = {t_g:.1f} K")
-    plt.scatter([t_g], [vol_at_tg], color='k')
-    plt.xlabel("Temperature / K")
-    plt.ylabel("Volume / nm$^3$")
-    plt.legend()
-    plt.savefig(f"{Path(voltemp_path).stem}_Hyperbolic.png", format="png")
-    plt.close()
+    Density_fit = Density[mask]
 
     # Plot linear fit (piecewise) on another plot
-    x0, y0, m1, m2 = linear_fit(Temperature_fit, Volume_fit, GuessTg)
+    x0, y0, m1, m2 = linear_fit(Temperature_fit, Density_fit, GuessTg)
     plt.figure(figsize=(5,5))
-    plt.scatter(Temperature_fit, Volume_fit, label="Data")
+    plt.scatter(Temperature_fit, Density_fit, label="Data")
     T1 = np.linspace(min(Temperature_fit), x0, 100)
     T2 = np.linspace(x0, max(Temperature_fit), 100)
     plt.plot(T1, m1*(T1-x0)+y0, 'b--', label="Linear fit (below Tg)")
     plt.plot(T2, m2*(T2-x0)+y0, 'g--', label="Linear fit (above Tg)")
-    plt.plot([x0, x0], [min(Volume_fit), y0], 'k:', label=f"Tg (linear) = {x0:.1f} K")
+    plt.plot([x0, x0], [min(Density_fit), y0], 'k:', label=f"Tg (linear) = {x0:.1f} K")
     plt.scatter([x0], [y0], color='k')
     plt.xlabel("Temperature / K")
-    plt.ylabel("Volume / nm$^3$")
+    plt.ylabel("Density / kg m$^{-3}$")
     plt.legend()
-    plt.savefig("volTemp.png", format="png")
+    plt.savefig("DensTemp.png", format="png")
     plt.close()
 
-    # Linear fit expansion coefficients
-    mask_below_lin = Temperature_fit < x0
-    mask_above_lin = Temperature_fit >= x0
-    Vol_Below_lin = np.mean(Volume_fit[mask_below_lin]) * 1e-27 if np.any(mask_below_lin) else 1
-    Vol_Above_lin = np.mean(Volume_fit[mask_above_lin]) * 1e-27 if np.any(mask_above_lin) else 1
-    beta_below_lin = m1 * 1e-27 / Vol_Below_lin
-    beta_above_lin = m2 * 1e-27 / Vol_Above_lin
-
     return {
-        "t_g": t_g,
         "x0": x0,
-        "beta_below_lin": beta_below_lin,
-        "beta_above_lin": beta_above_lin
     }
 
 def main():
@@ -215,14 +132,14 @@ def main():
         "-o", "glass.tpr",
     ])
     run(["mpirun", "gmx_mpi", "mdrun", "-deffnm", "glass"])
-    with open("voltemp.xvg", "w") as out:
+    with open("denstemp.xvg", "w") as out:
         run(
-            ["gmx", "energy", "-f", "glass.edr", "-o", "voltemp.xvg"],
-            input=b"Temperature\nVolume\n",
+            ["gmx", "energy", "-f", "glass.edr", "-o", "denstemp.xvg"],
+            input=b"Temperature\nDensity\n",
             stdout=out
         )
-    # This does a linear and hyperbolic fit to the data with the limits and guess imposed. It will be re-ran again after the initial guess with the whole range included.
-    cooling_results = glass_transition_analysis("voltemp.xvg", GuessTg=args.GuessTg, RangeLim=800)
+    # perform some rough guess with the density-temperature data with the limits and guess imposed. It will be re-ran again after the initial guess with the whole range included.
+    cooling_results = glass_transition_analysis("denstemp.xvg", GuessTg=args.GuessTg, RangeLim=800)
 
     # Move back to the base directory
     os.chdir(BASE_DIR)
@@ -238,15 +155,9 @@ def main():
     t_start = 0 
 
     # modify t_end, work out npoints and the total time
-    # Evaluate the hyperbolic and linear fits, pick the lowest Tg as the target as a hyperbolic fit will overfit when the data is too globally smooth
-    if cooling_results['t_g'] < cooling_results['x0']:
-        print(f"Using hyperbolic Tg of {cooling_results['t_g']:.2f} K for heating ramp.")
-        t_end = 50 * round(((cooling_results['t_g'] + 100)/50)) # This can be modified based on cooling rate in the future and the rounding window can be changed
-        RangeLim, GuessTg = t_end, cooling_results['t_g'] # we update the RangeLim  and GuessTg variables to use in analysis
-    elif cooling_results['x0'] <= cooling_results['t_g']:
-        print(f"Using linear Tg of {cooling_results['x0']:.2f} K for heating ramp.")
-        t_end = 50 * round(((cooling_results['x0'] + 100)/50)) # This can be modified based on cooling rate in the future and the rounding window can be changed
-        RangeLim, GuessTg = t_end,cooling_results['x0'] # we update the RangeLim  and GuessTg variables to use in analysis
+    print(f"Using linear Tg of {cooling_results['x0']:.2f} K for heating ramp.")
+    t_end = 50 * round(((cooling_results['x0'] + 100)/50)) # This can be modified based on cooling rate in the future and the rounding window can be changed
+    RangeLim, GuessTg = t_end,cooling_results['x0'] # we update the RangeLim  and GuessTg variables to use in analysis
     npoints = int(t_end / 50 ) + 1 # again can change this depending on the given range we want  --- we add 1 here so we have the correct number of points when 0 is included. 
     total_time = (npoints -1) * 2500 # cooling rate of 20 K ns^-1 in K ps^-1 we don't need the simulation to run long 
 
@@ -275,47 +186,47 @@ def main():
         "-o", "glass.tpr",
     ])
     run(["mpirun", "gmx_mpi", "mdrun", "-deffnm", "glass"])
-    with open("voltemp.xvg", "w") as out:
+    with open("denstemp.xvg", "w") as out:
         run(
-            ["gmx", "energy", "-f", "glass.edr", "-o", "voltemp.xvg"],
-            input=b"Temperature\nVolume\n",
+            ["gmx", "energy", "-f", "glass.edr", "-o", "denstemp.xvg"],
+            input=b"Temperature\nDensity\n",
             stdout=out
         )
-    heating_results = glass_transition_analysis("voltemp.xvg", GuessTg=GuessTg, RangeLim=RangeLim)
+    heating_results = glass_transition_analysis("denstemp.xvg", GuessTg=GuessTg, RangeLim=RangeLim)
     # change back to the cooling directory to get the re-fit of the data
     os.chdir(cooling_dir)
-    cooling_results = glass_transition_analysis("voltemp.xvg", GuessTg=GuessTg, RangeLim=RangeLim)
+    cooling_results = glass_transition_analysis("denstemp.xvg", GuessTg=GuessTg, RangeLim=RangeLim)
     # back to base directory
     os.chdir(BASE_DIR)
 
-    # Copy voltemp.xvg files to analysis directory
-    cooling_voltemp = cooling_dir / "voltemp.xvg"
-    heating_voltemp = heating_dir / "voltemp.xvg"
-    analysis_cooling = analysis_dir / "cooling_voltemp.xvg"
-    analysis_heating = analysis_dir / "heating_voltemp.xvg"
-    copyfile(cooling_voltemp, analysis_cooling)
-    copyfile(heating_voltemp, analysis_heating)
+    # Copy denstemp.xvg files to analysis directory
+    cooling_denstemp = cooling_dir / "denstemp.xvg"
+    heating_denstemp = heating_dir / "denstemp.xvg"
+    analysis_cooling = analysis_dir / "cooling_denstemp.xvg"
+    analysis_heating = analysis_dir / "heating_denstemp.xvg"
+    copyfile(cooling_denstemp, analysis_cooling)
+    copyfile(heating_denstemp, analysis_heating)
 
     # Load data
-    T_c, V_c = np.loadtxt(analysis_cooling, skiprows=0, comments=['#','@'], unpack=True, usecols=(1,2))
-    T_h, V_h = np.loadtxt(analysis_heating, skiprows=0, comments=['#','@'], unpack=True, usecols=(1,2))
+    T_c, D_c = np.loadtxt(analysis_cooling, skiprows=0, comments=['#','@'], unpack=True, usecols=(1,2))
+    T_h, D_h = np.loadtxt(analysis_heating, skiprows=0, comments=['#','@'], unpack=True, usecols=(1,2))
 
     # Apply temperature domain limit
     mask_c = T_c <= RangeLim
     mask_h = T_h <= RangeLim
     T_c_fit = T_c[mask_c]
     T_h_fit = T_h[mask_h]
-    V_c_fit = V_c[mask_c]
-    V_h_fit = V_h[mask_h]
+    D_c_fit = D_c[mask_c]
+    D_h_fit = D_h[mask_h]
 
     # Plot both cooling and heating stages
     plt.figure(figsize=(5,5))
-    plt.scatter(T_c_fit, V_c_fit, label="Cooling Data")
-    plt.scatter(T_h_fit, V_h_fit, label="Heating Data")
+    plt.scatter(T_c_fit, D_c_fit, label="Cooling Data")
+    plt.scatter(T_h_fit, D_h_fit, label="Heating Data")
 
     # Linear fitting 
-    x0_c, y0_c, m1_c, m2_c = linear_fit(T_c_fit, V_c_fit, GuessTg)
-    x0_h, y0_h, m1_h, m2_h = linear_fit(T_h_fit, V_h_fit, GuessTg)
+    x0_c, y0_c, m1_c, m2_c = linear_fit(T_c_fit, D_c_fit, GuessTg)
+    x0_h, y0_h, m1_h, m2_h = linear_fit(T_h_fit, D_h_fit, GuessTg)
     T1c = np.linspace(min(T_c_fit), x0_c, 100)
     T2c = np.linspace(x0_c, max(T_c_fit), 100)
     T1h = np.linspace(min(T_h_fit), x0_h, 100)
@@ -324,47 +235,29 @@ def main():
     plt.plot(T2c, m2_c*(T2c-x0_c)+y0_c, 'g--', label="Cooling fit (above Tg)")
     plt.plot(T1h, m1_h*(T1h-x0_h)+y0_h, 'r--', label="Heating fit (below Tg)")
     plt.plot(T2h, m2_h*(T2h-x0_h)+y0_h, 'm--', label="Heating fit (above Tg)")
-    plt.plot([x0_c, x0_c], [min(V_c_fit), y0_c], 'b:', label=f"Cooling Tg (linear) = {x0_c:.1f} K")
-    plt.plot([x0_h, x0_h], [min(V_h_fit), y0_h], 'r:', label=f"Heating Tg (linear) = {x0_h:.1f} K")
+    plt.plot([x0_c, x0_c], [min(D_c_fit), y0_c], 'b:', label=f"Cooling Tg (linear) = {x0_c:.1f} K")
+    plt.plot([x0_h, x0_h], [min(D_h_fit), y0_h], 'r:', label=f"Heating Tg (linear) = {x0_h:.1f} K")
     plt.scatter([x0_c], [y0_c], color='k')
     plt.scatter([x0_h], [y0_h], color='k')
     plt.xlabel("Temperature / K")
-    plt.ylabel("Volume / nm$^3$")
+    plt.ylabel("Density / kg m$^{-3}$")
     plt.legend()
     plt.tight_layout()
     plt.savefig(analysis_dir / "TgErrorPredict.png")
     plt.close()
 
     row = { 
-        "Cooling_Tg_hyperbolic": cooling_results['t_g'],
-        "Heating_Tg_hyperbolic": heating_results['t_g'],
         "Cooling_Tg_linear": x0_c,
         "Heating_Tg_linear": x0_h,
-        "Mean Tg_hyperbolic": (cooling_results['t_g'] + heating_results['t_g'])/2,
         "Mean Tg_linear": (x0_c + x0_h)/2,
-        "Cooling_beta_below_lin_K-1": cooling_results['beta_below_lin'],
-        "Cooling_beta_above_lin_K-1": cooling_results['beta_above_lin'],
-        "Heating_beta_below_lin_K-1": heating_results['beta_below_lin'],
-        "Heating_beta_above_lin_K-1": heating_results['beta_above_lin'],
     }
     results_df = pd.DataFrame([row])
     results_df.to_csv(analysis_dir / "Tg_results.csv", index=False, float_format="%.4f")
     with open(analysis_dir / "Tg_results.txt", "w") as f:
-        # Hyperbolic
-        f.write(f"Tg from cooling (hyperbolic): {cooling_results['t_g']:.2f}\n")
-        f.write(f"Tg from heating (hyperbolic): {heating_results['t_g']:.2f}\n")
-        f.write(f"Tg mean (hyperbolic): {(cooling_results['t_g'] + heating_results['t_g'])/2:.2f}\n")
         # Linear
         f.write(f"Tg from cooling (linear): {x0_c:.2f}\n")
         f.write(f"Tg from heating (linear): {x0_h:.2f}\n")
         f.write(f"Tg mean (linear): {(x0_c + x0_h)/2:.2f}\n")
-        # Linear fit volumetric thermal expansion coefficients
-        f.write(f"Linear fit volumetric thermal expansion coefficients (cooling):\n")
-        f.write(f"  Below Tg: {cooling_results['beta_below_lin']*1e6:.3f} K^-1 · 10-6\n")
-        f.write(f"  Above Tg: {cooling_results['beta_above_lin']*1e6:.3f} K^-1 · 10-6\n")
-        f.write(f"Linear fit volumetric thermal expansion coefficients (heating):\n")
-        f.write(f"  Below Tg: {heating_results['beta_below_lin']*1e6:.3f} K^-1 · 10-6\n")
-        f.write(f"  Above Tg: {heating_results['beta_above_lin']*1e6:.3f} K^-1 · 10-6\n")
 
 print("Glass transition analysis complete. Results and plot are in the Analysis directory.")
 if __name__ == "__main__":
